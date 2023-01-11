@@ -44,9 +44,9 @@ app.use((error, req, res, next) => {
 
 mongoose
     .connect(mongodbConString)
-    .then(res => {
-        return generateDocs();
-    })
+    // .then(res => {
+    //     return generateDocs();
+    // })
     .then(res => {
         app.listen(process.env.PORT || 3000);
     })
