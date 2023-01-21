@@ -5,10 +5,10 @@
     "title": "REST API",
     "description": ""
   },
-  "host": "//bookshop-1101.herokuapp.com",
+  "host": "localhost:3000",
   "basePath": "/",
   "schemes": [
-    "https"
+    "http"
   ],
   "paths": {
     "/signup": {

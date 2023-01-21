@@ -1,6 +1,5 @@
 const swaggerAutogen = require('swagger-autogen')()
 
-
 const generateDocs = async () => {
     const outputFile = './swagger_output.json'
     const endpointsFiles = ['./routes/auth.js'];
@@ -16,5 +15,5 @@ const generateDocs = async () => {
 
     
 }
-
-module.exports = generateDocs;
+generateDocs();
+// module.exports = generateDocs;
