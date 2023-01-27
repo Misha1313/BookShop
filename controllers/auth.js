@@ -62,7 +62,7 @@ exports.login = async (req, res, next) => {
             },
             'secretKey',
             {
-                'expiresIn': '1h'
+                'expiresIn': '1000h'
             }
 
         )

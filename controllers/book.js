@@ -1,6 +1,7 @@
 const Book = require('../models/book');
 const { validationResult } = require('express-validator');
 const User = require('../models/user');
+const io = require('../socket');
 
 exports.getBooks = async (req, res, next) => {
     try {
@@ -34,9 +35,6 @@ exports.createBook = async (req, res, next) => {
 
     const errors = validationResult(req);
 
-    console.log('gela');
-    console.log(req.userId);
-
     if(!errors.isEmpty()) {
         const error = new Error('Validation failed!');
         error.statusCode = 422;
@@ -52,19 +50,19 @@ exports.createBook = async (req, res, next) => {
         creator: req.userId
     });
 
-    
-
     try {
 
-        console.log(newBook);
         await newBook.save();
 
-        console.log('misha');
 
         const user = await User.findById(req.userId);
-        // user.books.push(newBook);
+        user.books.push(newBook);
         await user.save();
 
+        // io.getIo().emit('books', {
+        //     action: 'create',
+        //     book: { ...newBook._doc, creator: { _id: req.userId, name: user.name}}
+        // });
         res
             .status(201)
             .json({
@@ -77,6 +75,98 @@ exports.createBook = async (req, res, next) => {
         if (!err.statusCode) {
             err.statusCode = 500;
         }
+        next(err);
+    }
+}
+
+exports.updateBook = async (req, res, next) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        const error = new Error('Validation failed!');
+        error.statusCode = 422;
+        throw error;
+    }
+    const bookId = req.params.bookId;
+    const updatedTitle = req.body.title;
+    const updatedDescription = req.body.description;
+    const updatedImageUrl = req.body.imageUrl;
+    const updatedPrice = req.body.Price;
+   
+    try {
+        const book = await Book.findById(bookId);
+
+        if (!book) {
+            const error = new Error('Book not found!');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        if(book.creator.toString() !== req.userId) {
+            const error = new Error('Not authorized!');
+            error.statusCode = 403
+            throw error;
+        }
+
+        book.title = updatedTitle;
+        book.description = updatedDescription;
+        book.imageUrl = updatedImageUrl;
+        book.Price = updatedPrice;
+
+        const savedBook = await book.save();
+
+        // io.getIo().emit('books', {
+        //     action: 'update',
+        //     book: book
+        // });
+        res.status(200)
+            .json({
+                message: 'Book successfully updated!',
+                updatedBook: savedBook
+            })
+    } catch (err) {
+        next(err);
+    }
+
+}
+
+exports.deleteBook = async (req, res, next) => {
+    const bookId = req.params.bookId;
+
+    try {
+        const book = await Book.findById(bookId);
+        
+        if (!book) {
+            const error = new Error('Book not exists!');
+            error.statusCode = 404;
+            throw error;
+        }
+        
+        if (book.creator.toString() !== req.userId) {
+            const error = new Error('Not authorized!');
+            error.statusCode = 403;
+            throw error;
+        }
+
+        await Book.findByIdAndRemove(bookId);
+
+        const user = await User.findById(req.userId);
+        // user.posts.pull() gasarkvevia rato ar mushaobs
+        const updatedBooks = user.books.filter(book => book.toString() !== bookId);
+        
+        user.books = updatedBooks;
+
+        await user.save();
+
+        // io.getIo().emit('books', {
+        //     action: 'delete',
+        //     book: bookId
+        // });
+        res.status(200)
+            .json({
+                message: 'Deleted book!'
+            });
+
+    } catch (err) {
         next(err);
     }
 }

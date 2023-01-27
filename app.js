@@ -45,7 +45,12 @@ mongoose
     .connect(mongodbConString)
 
     .then(res => {
-        app.listen(process.env.PORT || 3000);
+        const server = app.listen(process.env.PORT || 3000);
+
+        const io = require('./socket').init(server);
+        io.on('connection', socket => {
+            console.log('client connected');
+        })
     })
     .catch(err => {
         console.log(err);
